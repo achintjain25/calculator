@@ -1,0 +1,26 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+
+# ── Bundled Node.js runtimes (do not commit ~200MB of binaries) ───────────────
+nodejs/
+node/
+
+# ── Build output ──────────────────────────────────────────────────────────────
+client/dist/
+server/dist/
+*.tsbuildinfo
+
+# ── Secrets — NEVER commit ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Private/customer documents that must never reach a web root ───────────────
+_private/
+
+# ── Logs & OS cruft ───────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
