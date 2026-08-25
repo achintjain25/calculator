@@ -226,6 +226,32 @@ has the right `DB_PASSWORD`.
 Use the `.bat` files — they add the bundled `nodejs\` folder to `PATH`. To run
 npm by hand, prefix it: `..\nodejs\npm.cmd install`.
 
+**PowerShell: "npm.ps1 cannot be loaded because running scripts is disabled"**
+
+```
+File C:\Program Files\nodejs\npm.ps1 cannot be loaded because running
+scripts is disabled on this system.
+```
+
+Windows blocks unsigned PowerShell scripts by default, and `npm` in PowerShell
+resolves to the `npm.ps1` wrapper. Nothing is wrong with the project.
+
+Call `npm.cmd` instead — it skips the PowerShell wrapper and needs no system
+change:
+
+```powershell
+npm.cmd run set-password -- "your password here"
+npm.cmd install
+npm.cmd run build
+```
+
+Or just use **Command Prompt (cmd.exe)** rather than PowerShell, where plain
+`npm` works.
+
+Relaxing the execution policy machine-wide (`Set-ExecutionPolicy`) also works,
+but it lowers a Windows security setting for every PowerShell script you ever
+run — `npm.cmd` is the safer fix.
+
 **PostgreSQL connection failed**
 Check the PostgreSQL service is running in Windows Services, verify
 `DB_PASSWORD`, and confirm the `rj_jewellers` database exists.

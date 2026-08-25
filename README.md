@@ -168,6 +168,10 @@ cd server
 npm run set-password -- "your password here"
 ```
 
+In **PowerShell**, use `npm.cmd run set-password -- "…"` instead — plain `npm`
+resolves to `npm.ps1`, which Windows blocks by default. See the troubleshooting
+section of [SETUP.md](SETUP.md).
+
 That prints `AUTH_USERNAME`, `AUTH_PASSWORD_HASH` and `AUTH_SESSION_SECRET` to
 paste into `server\.env`. Restart the server afterwards.
 
