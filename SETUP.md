@@ -80,7 +80,26 @@ cd server
 
 ---
 
-## Step 5 — Run the application
+## Step 5 — Set the login password
+
+The app has a single shared login and refuses to start without one.
+
+```cmd
+cd server
+..\nodejs\npm.cmd run set-password -- "your password here"
+```
+
+Paste the printed `AUTH_*` lines into `server\.env`, then restart the server.
+
+The password is stored as an scrypt hash — the password itself is never written
+to disk by that command.
+
+To run with no login at all (local development on a machine nobody else can
+reach), set `AUTH_ENABLED=false` instead.
+
+---
+
+## Step 6 — Run the application
 
 ### Development (two windows, with hot reload)
 
@@ -121,6 +140,9 @@ features need the backend.
 
 | Method | Path | Description |
 |---|---|---|
+| POST | `/api/auth/login` | Sign in, sets the session cookie |
+| POST | `/api/auth/logout` | Sign out |
+| GET | `/api/auth/me` | Current session state |
 | GET | `/api/health` | Health check, including database connectivity |
 | GET | `/api/customers` | List (`?search=` `?sort=` `?order=` `?limit=` `?offset=`) |
 | GET | `/api/customers/:id` | One customer with summary |
@@ -147,6 +169,9 @@ features need the backend.
 
 Deletes require `?force=true` because they destroy financial records. The UI
 confirms with the user first, then sends it.
+
+Every route except `/api/health` and `/api/auth/*` requires a signed-in
+session and returns **401** without one.
 
 ---
 

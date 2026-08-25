@@ -9,6 +9,15 @@ bills.
 
 ---
 
+## Requirements
+
+**Node.js 18+** and **PostgreSQL 14+**.
+
+If you cloned this from GitHub, install Node from <https://nodejs.org/> — the
+`nodejs/` folder in the original setup is ~105 MB of Windows binaries and is
+deliberately not committed. The `.bat` scripts use the bundled copy when it is
+present and fall back to your system install when it is not.
+
 ## Quick start
 
 ```cmd
@@ -17,6 +26,15 @@ setup-database.bat     :: create the database and run all migrations
 ```
 
 Then edit `server\.env` and set `DB_PASSWORD`.
+
+Set the login password (the app refuses to start without one):
+
+```cmd
+cd server
+npm run set-password -- "your password here"
+```
+
+Paste the printed `AUTH_*` lines into `server\.env`.
 
 **Development** — two windows:
 
@@ -53,7 +71,9 @@ Calculator/
 │       ├── db.ts            Connection pool + type parsers
 │       ├── interestEngine.ts  Reducing-balance calculation
 │       ├── validate.ts      Request validation helpers
+│       ├── auth.ts         Single-user login (env-configured)
 │       ├── migrate.ts       Migration runner
+│       ├── setPassword.ts   Password hashing helper
 │       ├── reconcile.ts     Settled-loan reporting tool
 │       └── routes/          customers, loans, payments, dashboard, bills
 │
@@ -121,6 +141,7 @@ Server only:
 | `npm run migrate` | Apply outstanding migrations |
 | `npm run migrate:status` | Show applied vs. pending |
 | `npm run reconcile` | Report loans that are settled but still open |
+| `npm run set-password` | Generate the login password hash + session secret |
 
 ---
 
@@ -132,18 +153,52 @@ Server only:
 | Backend | Node.js, Express, TypeScript |
 | Database | PostgreSQL |
 | PDF | jsPDF + jspdf-autotable (browser-side) |
+| Auth | scrypt password hashing, HMAC-signed session cookie |
 | Security | helmet, express-rate-limit, CORS |
 
 ---
 
-## Known limitations
+## Authentication
 
-**No authentication.** Anyone who can reach the port has full access to every
-customer record. Fine on a single shop PC or trusted LAN; see
-[DEPLOYMENT.md](DEPLOYMENT.md) before exposing it more widely.
+One shared login for the shop, configured entirely through environment
+variables — there is no users table.
+
+```cmd
+cd server
+npm run set-password -- "your password here"
+```
+
+That prints `AUTH_USERNAME`, `AUTH_PASSWORD_HASH` and `AUTH_SESSION_SECRET` to
+paste into `server\.env`. Restart the server afterwards.
+
+How it works:
+
+- The password is stored as an **scrypt hash**, never in plaintext
+- The session is an **HMAC-signed cookie** — stateless, so it survives restarts
+  with no session table
+- The cookie is `httpOnly` and `sameSite=lax`
+- Failed sign-ins are rate-limited to 10 per IP per 15 minutes
+- **Fails closed**: if auth is enabled and no password is set, the server
+  refuses to start rather than serving customer data openly
+
+To change the password later, re-run `set-password` and replace the hash.
+Changing `AUTH_SESSION_SECRET` signs you out everywhere.
+
+For local development only, `AUTH_ENABLED=false` skips the login entirely.
+Never use that on a machine others can reach.
+
+If you serve the app over **HTTPS**, also set `AUTH_COOKIE_SECURE=true`. Do not
+set it when serving plain HTTP on a LAN — the browser will drop the cookie and
+login will appear to do nothing.
+
+## Known limitations
 
 **No automated tests.** The interest engine in particular carries the whole
 business logic and would benefit from a unit test suite.
+
+**Single shared account.** One username and password for the whole shop, so
+there is no per-person audit trail. Fine for a one-operator business; if
+several staff need separate logins, that needs a real users table.
 
 **No backup automation.** See the backup section in
 [DEPLOYMENT.md](DEPLOYMENT.md).

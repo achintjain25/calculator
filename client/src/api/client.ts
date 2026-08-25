@@ -41,10 +41,34 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Listeners notified when the server rejects a request as unauthenticated.
+ *
+ * A session can expire at any moment, and without this every page would need
+ * its own 401 handling. Instead the app subscribes once and returns to the
+ * login screen.
+ */
+type UnauthenticatedListener = () => void
+const unauthenticatedListeners = new Set<UnauthenticatedListener>()
+
+/** Subscribe to 401s. Returns an unsubscribe function for effect cleanup. */
+export function onUnauthenticated(listener: UnauthenticatedListener): () => void {
+  unauthenticatedListeners.add(listener)
+  return () => { unauthenticatedListeners.delete(listener) }
+}
+
 api.interceptors.response.use(
   (res) => res,
   (err: AxiosError<{ error?: string; message?: string }>) => {
     const status = err.response?.status ?? null
+
+    // Signed out or session expired. The /auth/ endpoints are excluded: a
+    // failed login is a 401 too, and it must surface as a form error rather
+    // than remounting the login screen and wiping what was typed.
+    const url = err.config?.url ?? ''
+    if (status === 401 && !url.startsWith('/auth/')) {
+      unauthenticatedListeners.forEach(fn => fn())
+    }
 
     // A request that never got a response almost always means the backend is
     // not running — say so plainly instead of surfacing "Network Error".

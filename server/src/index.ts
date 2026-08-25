@@ -8,6 +8,7 @@ import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
 import { pool, testConnection } from './db'
+import { loadAuthConfig, requireAuth, authRoutes } from './auth'
 import customerRoutes  from './routes/customers'
 import loanRoutes      from './routes/loans'
 import paymentRoutes   from './routes/payments'
@@ -125,6 +126,29 @@ app.get('/api/health', async (_req, res) => {
     })
   }
 })
+
+// ─── Authentication ───────────────────────────────────────────────────────────
+// Single shared login, credentials in the environment. Mounted after the health
+// check and before every data route, so nothing below is reachable without a
+// session. Fails closed: if AUTH_ENABLED is not explicitly "false" and no
+// password is configured, startup aborts rather than serving customer data open.
+let authConfig
+try {
+  authConfig = loadAuthConfig()
+} catch (err) {
+  // A configuration mistake here means the difference between a locked app and
+  // an open one, so print the guidance plainly instead of a stack trace.
+  console.error('\n❌ Authentication is not configured correctly:\n')
+  console.error((err as Error).message + '\n')
+  process.exit(1)
+}
+
+app.use('/api/auth', authRoutes(authConfig))
+app.use('/api', requireAuth(authConfig))
+
+if (!authConfig.enabled) {
+  console.warn('⚠️  AUTH_ENABLED=false — the API is open to anyone who can reach it.')
+}
 
 // ─── API routes ───────────────────────────────────────────────────────────────
 app.use('/api/customers',  customerRoutes)

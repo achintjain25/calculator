@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 
 interface HeaderProps {
   shopName:      string
+  username?:     string | null
+  onLogout?:     () => void
   onMenuToggle?: () => void
 }
 
-export default function Header({ shopName, onMenuToggle }: HeaderProps) {
+export default function Header({ shopName, username, onLogout, onMenuToggle }: HeaderProps) {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -66,6 +68,29 @@ export default function Header({ shopName, onMenuToggle }: HeaderProps) {
           </p>
           <p className="text-gray-500 text-xs">{dateStr}</p>
         </div>
+
+        {/* Signed-in user + sign out */}
+        {onLogout && (
+          <div className="flex items-center gap-3 pl-3 ml-1 border-l border-gray-800">
+            {username && (
+              <span className="text-gray-400 text-xs hidden md:inline" title="Signed in">
+                {username}
+              </span>
+            )}
+            <button
+              onClick={onLogout}
+              title="Sign out"
+              aria-label="Sign out"
+              className="p-1.5 text-gray-500 hover:text-gold-400 transition-colors
+                         rounded-lg hover:bg-gray-800/60"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="h-px w-full bg-gradient-to-r from-transparent via-gold-500/40 to-transparent" />

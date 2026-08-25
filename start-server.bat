@@ -10,7 +10,9 @@ echo.
 
 REM %~dp0 is this script's own folder, so the project still works if it is
 REM moved off C:\Calculator.
-set "PATH=%~dp0nodejs;%PATH%"
+REM Resolve Node.js: bundled runtime if present, else the system install.
+call "%~dp0_setup-node.bat"
+if errorlevel 1 ( pause & exit /b 1 )
 cd /d "%~dp0server"
 
 if not exist ".env" (
@@ -23,7 +25,7 @@ if not exist ".env" (
   exit /b 1
 )
 
-REM Only install when dependencies are actually missing — the old script ran
+REM Only install when dependencies are actually missing - the old script ran
 REM npm install on every single launch.
 if not exist "node_modules" (
   echo [1/2] Installing server dependencies...

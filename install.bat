@@ -1,6 +1,8 @@
 @echo off
 echo Installing client dependencies...
-set PATH=%~dp0nodejs;%PATH%
+REM Resolve Node.js: bundled runtime if present, else the system install.
+call "%~dp0_setup-node.bat"
+if errorlevel 1 ( pause & exit /b 1 )
 cd client
 call npm install
 echo.

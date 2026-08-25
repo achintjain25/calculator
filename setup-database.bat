@@ -83,7 +83,9 @@ REM ---------------------------------------------------------------------------
 echo [3/3] Applying database migrations...
 echo.
 
-set "PATH=%~dp0nodejs;%PATH%"
+REM Resolve Node.js: bundled runtime if present, else the system install.
+call "%~dp0_setup-node.bat"
+if errorlevel 1 ( pause & exit /b 1 )
 cd /d "%~dp0server"
 
 if not exist "node_modules" (

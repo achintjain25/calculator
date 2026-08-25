@@ -16,7 +16,9 @@
     "migrate:status": "ts-node-dev --transpile-only src/migrate.ts status",
     "migrate:prod": "node dist/migrate.js",
     "reconcile": "ts-node-dev --transpile-only src/reconcile.ts",
-    "reconcile:prod": "node dist/reconcile.js"
+    "reconcile:prod": "node dist/reconcile.js",
+    "set-password": "ts-node-dev --transpile-only src/setPassword.ts",
+    "set-password:prod": "node dist/setPassword.js"
   },
   "dependencies": {
     "compression": "^1.7.4",

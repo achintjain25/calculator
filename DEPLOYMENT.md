@@ -100,6 +100,9 @@ The app is then at <http://localhost:3000>.
 - [ ] Nothing private sits in `client\public\` — everything there is published
 - [ ] A database backup schedule exists (see below)
 - [ ] `npm run reconcile` reviewed — no unexpectedly settled loans
+- [ ] `AUTH_PASSWORD_HASH` and `AUTH_SESSION_SECRET` are set, password is strong
+- [ ] `AUTH_COOKIE_SECURE=true` if serving over HTTPS
+- [ ] Signed out, confirmed `/api/customers` returns 401
 
 ---
 
@@ -123,20 +126,33 @@ one into a scratch database occasionally to confirm the dumps are usable.
 anyone outside the shop reach it, be aware of what this application does **not**
 have:
 
-### There is no authentication
+### Authentication is a single shared login
 
-Anyone who can reach the port can read every customer's name, phone number and
-loan history, and can create or delete records. This is safe on a single shop
-PC or a trusted LAN. It is **not** safe on the public internet.
+The app requires a sign-in, configured through environment variables. Set it up
+before deploying:
 
-If the app needs to be reachable remotely, do one of these before opening it up:
+```cmd
+cd server
+npm run set-password -- "your password here"
+```
 
-1. **A VPN or Tailscale** into the shop network — simplest, and keeps the app
-   private without code changes.
-2. **A reverse proxy with authentication** in front of it (nginx with basic
-   auth, Cloudflare Access, or similar).
-3. **Build login into the app** — user accounts, sessions, and per-route
-   authorisation. This is real work, not a config change.
+Paste the printed `AUTH_*` lines into `server\.env`. The server **refuses to
+start** if auth is enabled and no password is configured, so a deployment
+cannot accidentally go out open.
+
+Two things to get right on a public deployment:
+
+1. **Serve over HTTPS and set `AUTH_COOKIE_SECURE=true`.** Without TLS the
+   session cookie travels in the clear. Do not set this while serving plain
+   HTTP — the browser drops the cookie and login silently fails.
+2. **Use a strong password.** One shared credential is the only thing between
+   the internet and every customer record.
+
+Because it is a single shared account, there is no per-person audit trail. If
+several staff need separate logins, that needs a real users table.
+
+For an extra layer, a VPN or Tailscale keeps the app off the public internet
+entirely — worth considering for a shop tool that only staff ever use.
 
 ### If you put it behind a reverse proxy
 

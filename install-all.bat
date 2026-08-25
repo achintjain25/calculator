@@ -4,7 +4,9 @@ title RJ Jewellers - Install All Dependencies
 color 0E
 
 REM %~dp0 is this script's own folder, so the project works from any location.
-set "PATH=%~dp0nodejs;%PATH%"
+REM Resolve Node.js: bundled runtime if present, else the system install.
+call "%~dp0_setup-node.bat"
+if errorlevel 1 ( pause & exit /b 1 )
 
 echo.
 echo ==========================================
